@@ -21,6 +21,28 @@ fbq('init', '1620829165645629');
 fbq('track', 'PageView');
 fbq('track', 'Purchase', {value: '399.00', currency: 'MAD'}, {eventID: 'purchase_' + Date.now()});
 
+// CAPI server-side call
+var eventId = 'purchase_' + Date.now();
+function getCookie(name) {
+  var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? match[2] : null;
+}
+var orderData = {};
+try { orderData = JSON.parse(sessionStorage.getItem('lastOrder') || '{}'); } catch(e) {}
+fetch('/.netlify/functions/purchase', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({
+    event_id: eventId,
+    phone: orderData.phone || '',
+    email: orderData.email || '',
+    fbp: getCookie('_fbp'),
+    fbc: getCookie('_fbc')
+  })
+}).then(function(r){ return r.json(); })
+.then(function(d){ console.log('CAPI:', d); })
+.catch(function(e){ console.warn('CAPI error:', e); });
+
 // Lire cookies fbp et fbc
 function getCookie(name) {
   var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
